@@ -236,36 +236,14 @@ async function seed() {
         revenue: 173108382,
         genre_ids: [28, 12, 878],
       },
-      {
-        title: "O Livro de Eli",
-        overview:
-          "Trinta anos após um holocausto nuclear, Eli viaja para o oeste através dos Estados Unidos devastados em uma missão sagrada. Ele possui o último exemplar de um livro que pode salvar a humanidade - ou destruí-la.",
-        poster_path:
-          "https://my-cubos-bucket.s3.amazonaws.com/movies/1748636699084-dcgefh.jpg",
-        backdrop_path:
-          "https://image.tmdb.org/t/p/w1280/dkbFNqq2vlM6h6qeXAQwE4YWnpS.jpg",
-        release_date: "2024-12-20",
-        vote_average: 6.8,
-        popularity: 876.543,
-        runtime: 118,
-        revenue: 157107755,
-        genre_ids: [28, 18, 53],
-      },
     ];
 
-    const existingMovies = await getQuery(
-      "SELECT COUNT(*) as count FROM movies WHERE user_id = ?",
-      [userId]
-    );
-
-    // Limpar filmes existentes para atualizar com novos campos
     await runQuery(
       "DELETE FROM movie_genres WHERE movie_id IN (SELECT id FROM movies WHERE user_id = ?)",
       [userId]
     );
     await runQuery("DELETE FROM movies WHERE user_id = ?", [userId]);
 
-    // Inserir filmes com novos campos
     for (const movie of movies) {
       const movieResult = await runQuery(
         `
@@ -294,9 +272,7 @@ async function seed() {
       }
     }
 
-    console.log(
-      `✅ ${movies.length} filmes inseridos no banco com novos campos runtime e revenue`
-    );
+    console.log(`✅ ${movies.length} filmes inseridos no banco`);
 
     console.log("🎉 Seed concluído com sucesso!");
     console.log("📧 Login de teste: admin@exemplo.com");
