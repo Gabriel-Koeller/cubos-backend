@@ -9,7 +9,6 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validações básicas
     if (!name || !email || !password) {
       return res
         .status(400)
@@ -22,7 +21,6 @@ router.post("/register", async (req, res) => {
         .json({ error: "A senha deve ter pelo menos 6 caracteres" });
     }
 
-    // Verificar se o email já existe
     const existingUser = await getQuery(
       "SELECT id FROM users WHERE email = ?",
       [email]
@@ -31,20 +29,16 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email já cadastrado" });
     }
 
-    // Criptografar senha
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Criar usuário no banco
     const result = await runQuery(
       "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
       [name, email, passwordHash]
     );
 
-    // Gerar token
     const token = generateToken(result.id);
 
-    // Buscar dados do usuário criado
     const user = await getQuery(
       "SELECT id, name, email FROM users WHERE id = ?",
       [result.id]

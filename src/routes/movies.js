@@ -149,6 +149,8 @@ router.post("/", async (req, res) => {
       release_date,
       vote_average = 0,
       popularity = 0,
+      runtime = 0,
+      revenue = 0,
       genre_ids = [],
     } = req.body;
 
@@ -158,8 +160,8 @@ router.post("/", async (req, res) => {
 
     const result = await runQuery(
       `
-      INSERT INTO movies (title, overview, poster_path, backdrop_path, release_date, vote_average, popularity, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO movies (title, overview, poster_path, backdrop_path, release_date, vote_average, popularity, runtime, revenue, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       [
         title,
@@ -169,6 +171,8 @@ router.post("/", async (req, res) => {
         release_date,
         vote_average,
         popularity,
+        runtime,
+        revenue,
         req.user.id,
       ]
     );

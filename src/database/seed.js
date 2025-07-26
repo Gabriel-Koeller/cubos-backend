@@ -37,6 +37,8 @@ async function seed() {
         release_date: "2018-12-21",
         vote_average: 6.7,
         popularity: 1876.543,
+        runtime: 115,
+        revenue: 467220000,
         genre_ids: [28, 12, 878],
       },
       {
@@ -50,6 +52,8 @@ async function seed() {
         release_date: "2022-12-14",
         vote_average: 7.7,
         popularity: 2547.855,
+        runtime: 192,
+        revenue: 2320250000,
         genre_ids: [878, 12, 14],
       },
       {
@@ -63,6 +67,8 @@ async function seed() {
         release_date: "2022-11-09",
         vote_average: 7.3,
         popularity: 1947.912,
+        runtime: 161,
+        revenue: 859102000,
         genre_ids: [28, 12, 18],
       },
       {
@@ -76,6 +82,8 @@ async function seed() {
         release_date: "2021-12-15",
         vote_average: 8.4,
         popularity: 1689.932,
+        runtime: 148,
+        revenue: 1921847000,
         genre_ids: [28, 12, 878],
       },
       {
@@ -89,6 +97,8 @@ async function seed() {
         release_date: "2022-05-24",
         vote_average: 8.2,
         popularity: 1456.321,
+        runtime: 130,
+        revenue: 1488732821,
         genre_ids: [28, 18],
       },
       {
@@ -102,6 +112,8 @@ async function seed() {
         release_date: "2024-05-23",
         vote_average: 6.8,
         popularity: 1234.567,
+        runtime: 123,
+        revenue: 1128462972,
         genre_ids: [28, 12, 878],
       },
       {
@@ -115,6 +127,8 @@ async function seed() {
         release_date: "2024-10-04",
         vote_average: 7.2,
         popularity: 987.654,
+        runtime: 122,
+        revenue: 404980906,
         genre_ids: [28, 878, 53],
       },
       {
@@ -128,6 +142,8 @@ async function seed() {
         release_date: "2024-05-24",
         vote_average: 7.5,
         popularity: 1567.89,
+        runtime: 104,
+        revenue: 521172832,
         genre_ids: [16, 10751, 12],
       },
       {
@@ -141,6 +157,8 @@ async function seed() {
         release_date: "2024-03-22",
         vote_average: 6.9,
         popularity: 2134.567,
+        runtime: 143,
+        revenue: 1148161989,
         genre_ids: [28, 12, 14],
       },
       {
@@ -154,6 +172,8 @@ async function seed() {
         release_date: "2024-04-12",
         vote_average: 6.1,
         popularity: 678.901,
+        runtime: 120,
+        revenue: 32094270,
         genre_ids: [12, 10751, 14],
       },
       {
@@ -167,6 +187,8 @@ async function seed() {
         release_date: "2024-06-14",
         vote_average: 6.5,
         popularity: 543.21,
+        runtime: 98,
+        revenue: 53300000,
         genre_ids: [35, 10749, 18],
       },
       {
@@ -180,6 +202,8 @@ async function seed() {
         release_date: "2024-03-28",
         vote_average: 7.1,
         popularity: 789.123,
+        runtime: 110,
+        revenue: 45200000,
         genre_ids: [18, 10749, 35],
       },
       {
@@ -193,6 +217,8 @@ async function seed() {
         release_date: "2024-11-08",
         vote_average: 8.4,
         popularity: 3456.789,
+        runtime: 117,
+        revenue: 384299543,
         genre_ids: [16, 28, 12],
       },
       {
@@ -206,6 +232,8 @@ async function seed() {
         release_date: "2024-11-27",
         vote_average: 6.1,
         popularity: 1234.321,
+        runtime: 128,
+        revenue: 173108382,
         genre_ids: [28, 12, 878],
       },
       {
@@ -219,6 +247,8 @@ async function seed() {
         release_date: "2024-12-20",
         vote_average: 6.8,
         popularity: 876.543,
+        runtime: 118,
+        revenue: 157107755,
         genre_ids: [28, 18, 53],
       },
     ];
@@ -228,37 +258,45 @@ async function seed() {
       [userId]
     );
 
-    if (existingMovies.count === 0) {
-      for (const movie of movies) {
-        const movieResult = await runQuery(
-          `
-          INSERT INTO movies (title, overview, poster_path, backdrop_path, release_date, vote_average, popularity, user_id)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-          [
-            movie.title,
-            movie.overview,
-            movie.poster_path,
-            movie.backdrop_path,
-            movie.release_date,
-            movie.vote_average,
-            movie.popularity,
-            userId,
-          ]
+    // Limpar filmes existentes para atualizar com novos campos
+    await runQuery(
+      "DELETE FROM movie_genres WHERE movie_id IN (SELECT id FROM movies WHERE user_id = ?)",
+      [userId]
+    );
+    await runQuery("DELETE FROM movies WHERE user_id = ?", [userId]);
+
+    // Inserir filmes com novos campos
+    for (const movie of movies) {
+      const movieResult = await runQuery(
+        `
+        INSERT INTO movies (title, overview, poster_path, backdrop_path, release_date, vote_average, popularity, runtime, revenue, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          movie.title,
+          movie.overview,
+          movie.poster_path,
+          movie.backdrop_path,
+          movie.release_date,
+          movie.vote_average,
+          movie.popularity,
+          movie.runtime,
+          movie.revenue,
+          userId,
+        ]
+      );
+
+      for (const genreId of movie.genre_ids) {
+        await runQuery(
+          "INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)",
+          [movieResult.id, genreId]
         );
-
-        for (const genreId of movie.genre_ids) {
-          await runQuery(
-            "INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)",
-            [movieResult.id, genreId]
-          );
-        }
       }
-
-      console.log(`✅ ${movies.length} filmes inseridos no banco`);
-    } else {
-      console.log("ℹ️  Filmes já existem no banco");
     }
+
+    console.log(
+      `✅ ${movies.length} filmes inseridos no banco com novos campos runtime e revenue`
+    );
 
     console.log("🎉 Seed concluído com sucesso!");
     console.log("📧 Login de teste: admin@exemplo.com");
